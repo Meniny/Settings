@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "Settings"
-  s.version          = "1.0.1"
+  s.version          = "1.0.2"
   s.summary          = "A tiny library for iOS Settings app."
   s.homepage         = "https://github.com/Meniny/Settings"
   s.license          = 'MIT'

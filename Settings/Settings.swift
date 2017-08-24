@@ -93,7 +93,7 @@ public class Settings {
         path = Settings.Path.mix(bundleIdentifier, iOS10: UIDevice.aboveiOS10)
     }
     
-    public class func currentApp() -> Settings {
+    public class var currentApp: Settings {
         let bundleIdentifier = Bundle.main.infoDictionary?["CFBundleIdentifier"] as? String
         return Settings(bundleIdentifier: bundleIdentifier ?? "")
     }
