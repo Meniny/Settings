@@ -57,6 +57,10 @@ public class Settings {
         self.path = path
     }
     
+    public init(_ path: Settings.Path) {
+        self.path = path.rawValue
+    }
+    
     public init(bundleIdentifier: String) {
         path = Settings.Path.root.rawValue + bundleIdentifier
     }
