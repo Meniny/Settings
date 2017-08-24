@@ -1,0 +1,6 @@
+framework module Settings {
+  umbrella header "Settings-umbrella.h"
+
+  export *
+  module * { export * }
+}

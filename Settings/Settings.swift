@@ -11,58 +11,91 @@ import Foundation
 public class Settings {
     
     public enum Path: String {
-        case about = "prefs:root=General&path=About"
-        case accessibility = "prefs:root=General&path=ACCESSIBILITY"
-        case airplaneModeOn = "prefs:root=AIRPLANE_MODE"
-        case autoLock = "prefs:root=General&path=AUTOLOCK"
-        case brightness = "prefs:root=Brightness"
-        case bluetooth = "prefs:root=General&path=Bluetooth"
-        case dateAndTime = "prefs:root=General&path=DATE_AND_TIME"
-        case faceTime = "prefs:root=FACETIME"
-        case general = "prefs:root=General"
-        case keyboard = "prefs:root=General&path=Keyboard"
-        case iCloud = "prefs:root=CASTLE"
-        case iCloudStorageAndBackup = "prefs:root=CASTLE&path=STORAGE_AND_BACKUP"
-        case international = "prefs:root=General&path=INTERNATIONAL"
-        case locationServices = "prefs:root=LOCATION_SERVICES"
-        case music = "prefs:root=MUSIC"
-        case musicEqualizer = "prefs:root=MUSIC&path=EQ"
-        case musicVolumeLimit = "prefs:root=MUSIC&path=VolumeLimit"
-        case network = "prefs:root=General&path=Network"
-        case nikeiPod = "prefs:root=NIKE_PLUS_IPOD"
-        case notes = "prefs:root=NOTES"
-        case notification = "prefs:root=NOTIFICATIONS_ID"
-        case phone = "prefs:root=Phone"
-        case photos = "prefs:root=Photos"
-        case profile = "prefs:root=General&path=ManagedConfigurationList"
-        case reset = "prefs:root=General&path=Reset"
-        case safari = "prefs:root=Safari"
-        case siri = "prefs:root=General&path=Assistant"
-        case sounds = "prefs:root=Sounds"
-        case softwareUpdate = "prefs:root=General&path=SOFTWARE_UPDATE_LINK"
-        case store = "prefs:root=STORE"
-        case twitter = "prefs:root=TWITTER"
-        case usage = "prefs:root=General&path=USAGE"
-        case vPN = "prefs:root=General&path=Network/VPN"
-        case wallpaper = "prefs:root=Wallpaper"
-        case wiFi = "prefs:root=WIFI"
-        case privacy = "prefs:root=Privacy"
-        //case PrivacyPhotos = "prefs:root=Privacy&path=Photos"
-        case root = "prefs:root="
+        case about = "General&path=About"
+        case accessibility = "General&path=ACCESSIBILITY"
+        case airplaneModeOn = "AIRPLANE_MODE"
+        case autoLock = "General&path=AUTOLOCK"
+        case brightness = "Brightness"
+        case bluetooth = "General&path=Bluetooth"
+        case dateAndTime = "General&path=DATE_AND_TIME"
+        case faceTime = "FACETIME"
+        case general = "General"
+        case keyboard = "General&path=Keyboard"
+        case iCloud = "CASTLE"
+        case iCloudStorageAndBackup = "CASTLE&path=STORAGE_AND_BACKUP"
+        case international = "General&path=INTERNATIONAL"
+        case locationServices = "LOCATION_SERVICES"
+        case music = "MUSIC"
+        case musicEqualizer = "MUSIC&path=EQ"
+        case musicVolumeLimit = "MUSIC&path=VolumeLimit"
+        case network = "General&path=Network"
+        case nikeiPod = "NIKE_PLUS_IPOD"
+        case notes = "NOTES"
+        case notification = "NOTIFICATIONS_ID"
+        case phone = "Phone"
+        case photos = "Photos"
+        case profile = "General&path=ManagedConfigurationList"
+        case reset = "General&path=Reset"
+        case safari = "Safari"
+        case siri = "General&path=Assistant"
+        case sounds = "Sounds"
+        case softwareUpdate = "General&path=SOFTWARE_UPDATE_LINK"
+        case store = "STORE"
+        case twitter = "TWITTER"
+        case usage = "General&path=USAGE"
+        case vPN = "General&path=Network/VPN"
+        case wallpaper = "Wallpaper"
+        case wiFi = "WIFI"
+        case privacy = "Privacy"
+        //case PrivacyPhotos = "Privacy&path=Photos"
+        case root = "root"
+        
+        public var afteriOS10: String {
+            return Settings.Path.mix(rawValue, iOS10: true)
+        }
+        
+        public var beforeiOS10: String {
+            return Settings.Path.mix(rawValue, iOS10: false)
+        }
+        
+        public var path: String {
+            if UIDevice.aboveiOS10 {
+                return afteriOS10
+            }
+            return beforeiOS10
+        }
+        
+        fileprivate static func mix(_ raw: String, iOS10: Bool) -> String {
+            var path = (iOS10 ? "App-Prefs:" : "prefs:") + Settings.Path.root.rawValue
+            if raw != Settings.Path.root.rawValue && !raw.isEmpty {
+                path.append("=" + raw)
+            }
+            
+            return path
+        }
     }
     
     public var path: String
     
     public init(path: String) {
-        self.path = path
+        if let pe = Settings.Path(rawValue: path) {
+            self.path = pe.path
+        } else {
+            self.path = path
+        }
     }
     
     public init(_ path: Settings.Path) {
-        self.path = path.rawValue
+        self.path = path.path
     }
     
     public init(bundleIdentifier: String) {
-        path = Settings.Path.root.rawValue + bundleIdentifier
+        path = Settings.Path.mix(bundleIdentifier, iOS10: UIDevice.aboveiOS10)
+    }
+    
+    public class func currentApp() -> Settings {
+        let bundleIdentifier = Bundle.main.infoDictionary?["CFBundleIdentifier"] as? String
+        return Settings(bundleIdentifier: bundleIdentifier ?? "")
     }
     
     public class func canOpen(settings: Settings) -> Bool {
@@ -86,6 +119,42 @@ public class Settings {
     
     public class func open(settings: Settings) {
         settings.open()
+    }
+}
+
+/// Compare tow version string (eg: `1.0.0`, `2.0.1`, `3.0`)
+///
+/// - Parameters:
+///   - lhs: First version string
+///   - rhs: Second version string
+/// - Returns: Compare result
+fileprivate func Compare(version lhs: String, with rhs: String) -> ComparisonResult {
+    guard !lhs.isEmpty else {
+        if rhs.isEmpty {
+            return .orderedSame
+        }
+        return .orderedAscending
+    }
+    guard !rhs.isEmpty else {
+        return .orderedDescending
+    }
+    
+    return lhs.compare(rhs, options: .numeric, range: rhs.range(of: rhs), locale: nil)
+}
+
+/// Compare tow version string (eg: `1.0.0`, `2.0.1`, `3.0`)
+///
+/// - Parameters:
+///   - lhs: First version string
+///   - rhs: Second version string
+/// - Returns: If `lhs` is greater than or equal to `rhs`
+fileprivate func SystemVersion(_ version: String, greaterThanOrEqualTo rhs: String) -> Bool {
+    return Compare(version: version, with: rhs) != .orderedAscending
+}
+
+fileprivate extension UIDevice {
+    fileprivate static var aboveiOS10: Bool {
+        return SystemVersion(UIDevice.current.systemVersion, greaterThanOrEqualTo: "10")
     }
 }
 
