@@ -109,16 +109,19 @@ public class Settings {
         return UIApplication.shared.canOpenURL(url)
     }
     
-    public func open() {
+    @discardableResult
+    public func open() -> Bool {
         if canOpen {
             if let url = URL(string: path) {
-                UIApplication.shared.openURL(url)
+                return UIApplication.shared.openURL(url)
             }
         }
+        return false
     }
     
-    public class func open(settings: Settings) {
-        settings.open()
+    @discardableResult
+    public class func open(settings: Settings) -> Bool {
+        return settings.open()
     }
 }
 
